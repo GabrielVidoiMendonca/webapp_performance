@@ -38,6 +38,65 @@ namespace web_app_performance.Controllers
             await db.StringSetAsync(key, usuariosJson);
 
             return Ok(usuarios);
+        } 
+        [HttpPost]
+
+        public async Task<IActionResult> PostUsuario([FromBody] Usuario usuario)
+        {
+            string connectionString = "Server=localhost;Database=sys;User=root;Password=123;";
+            using var connection = new MySqlConnection(connectionString);
+            await connection.OpenAsync();
+
+            string sql = "INSERT INTO usuarios(Nome,Email) VALUES (@nome,@email)";
+            await connection.ExecuteAsync(sql, usuario);
+
+            //apaga o cache
+            string key = "getUsuario";
+            redis = ConnectionMultiplexer.Connect("localhost:6379");
+            IDatabase db = redis.GetDatabase();
+            await db.KeyDeleteAsync(key);
+
+            return Ok(usuario);
+
+        }
+
+        [HttpPut]
+        public async Task<IActionResult> PutUsuario([FromBody] Usuario usuario)
+        {
+            string connectionString = "Server=localhost;Database=sys;User=root;Password=123";
+            using var connection = new MySqlConnection(connectionString);
+            await connection.OpenAsync();
+
+            string sql = "UPDATE usuarios SET Nome = @nome, Email = @email WHERE Id = @id";
+            await connection.ExecuteAsync(sql, usuario);
+
+            //apaga o cache
+            string key = "getUsuario";
+            redis = ConnectionMultiplexer.Connect("localhost:6379");
+            IDatabase db = redis.GetDatabase();
+            await db.KeyDeleteAsync(key);
+
+            return Ok();
+
+        }
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            string connectionString = "Server=localhost;Database=sys;User=root;Password=123";
+            using var connection = new MySqlConnection(connectionString);
+            await connection.OpenAsync();
+
+            string sql = "DELETE FROM usuarios WHERE id = @id";
+            await connection.ExecuteAsync(sql, new { id });
+
+            //apaga o cache
+            string key = "getusuario";
+            redis = ConnectionMultiplexer.Connect("localhost:6379");
+            IDatabase db = redis.GetDatabase();
+            await db.KeyDeleteAsync(key);
+
+            return Ok();
+
         }
     }
 }
